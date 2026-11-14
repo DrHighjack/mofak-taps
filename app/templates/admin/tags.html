@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>Shared tap boxes</h1>
+<p><a class="btn quiet" href="/admin/tag-routing">Manage NFC destinations</a></p>
+<p class="muted">Anyone can tap any box. The phone remembers the person, not the box. A clear schedule match chooses the shop; otherwise the person picks it.</p>
+<ul class="tag-list" aria-label="Shared tap boxes">
+{% for t in tokens %}
+<li class="tag-row">
+  <div class="tag-details">
+    <strong>{{ t.label }}</strong> <span class="{{ 'flag' if not t.active else 'small muted' }}">{{ 'Turned off' if not t.active else 'Active' }}</span>
+    <div class="mono">{{ base }}/t/{{ t.token }}</div>
+  </div>
+  <form method="post" action="/admin/tags" class="tag-rename">
+    <input type="hidden" name="edit_id" value="{{ t.id }}">
+    <label class="sr-only" for="tag-{{ t.id }}">Label for {{ t.label }}</label>
+    <input id="tag-{{ t.id }}" type="text" name="label" value="{{ t.label }}" maxlength="120" required>
+    <button class="btn small" aria-label="Save label for {{ t.label }}">Save</button>
+  </form>
+  <form method="post" action="/admin/tags" class="tag-toggle">
+    <input type="hidden" name="revoke_id" value="{{ t.id }}">
+    <button class="btn small quiet" aria-label="{{ 'Turn off' if t.active else 'Turn on' }} {{ t.label }}">{{ 'Turn off' if t.active else 'Turn on' }}</button>
+  </form>
+</li>
+{% else %}
+<li class="muted">No tags yet. Make a shared box link below.</li>
+{% endfor %}
+</ul>
+<form method="post" action="/admin/tags" class="panel">
+  <h2 style="margin-top:0">New shared box</h2>
+  <label for="new-box-label">Label (where the box is)</label>
+  <input id="new-box-label" type="text" name="label" maxlength="120" placeholder="Station 2" required>
+  <button class="btn" style="margin-top:12px">Make tag link</button>
+</form>
+{% endblock %}

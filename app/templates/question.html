@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block body %}
+<form method="post" action="{{ confirm_url }}" class="panel">
+  <input type="hidden" name="ticket" value="{{ ticket }}">
+  {% if action == 'late_out' %}<p class="notice">This slot closed automatically. Clock out now instead? Admin will check the corrected end.</p>{% endif %}
+  <h1 class="question">Clock {{ 'in' if action == 'in' else 'out' }} {{ streamer.name }} on {{ shop.name }} at <span id="now">{{ when }}</span>?</h1>
+  <button class="btn big go priority">Confirm</button>
+  <a class="btn big stop" href="{{ cancel_url }}">Cancel</a>
+  <a class="btn big quiet" href="{{ cancel_url }}&amp;change=true">{{ 'Change shop' if tap else 'Change name or shop' }}</a>
+  <p class="small muted">The time is taken when you press Confirm.</p>
+</form>
+{% if tap %}{% include "tap_identity.html" %}{% endif %}
+{% if action == 'late_out' and tap %}
+<form method="post" action="{{ confirm_url.rsplit('/', 1)[0] }}/new" class="panel">
+  <input type="hidden" name="shop_id" value="{{ shop.id }}">
+  <button class="btn big">Starting a new stream? Clock in instead</button>
+</form>
+{% endif %}
+<script>
+(function(){
+  var el=document.getElementById('now');
+  setInterval(async function(){
+    try {var r=await fetch('/clock/time');if(!r.ok)throw new Error('time');el.textContent=await r.text();}
+    catch(e){document.getElementById('time-note').textContent='The clock could not refresh. The recorded time is still taken at Confirm.';}
+  },15000);
+  document.querySelector('form').addEventListener('submit',function(){this.querySelector('button').disabled=true;});
+})();
+</script>
+<p id="time-note" class="small muted" role="status"></p>
+{% endblock %}

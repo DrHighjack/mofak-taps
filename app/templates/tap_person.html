@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+<form method="post" action="/t/{{ token }}/person" class="panel">
+  <h1>Who's tapping?</h1>
+  <p class="muted">Pick your name once. This phone will remember you on any shared box for up to a year, unless you sign out or clear cookies.</p>
+  <p class="small muted">This remembers a name; it is not a password-protected login. Only use it on your own phone. The shared Clock screen does not remember a person.</p>
+  <label for="tap-person">Your name</label>
+  <select name="streamer_id" id="tap-person" required>
+    <option value="">Pick your name</option>
+    {% for s in streamers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+  </select>
+  {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  <button class="btn big go priority" id="remember-person">Remember me on this phone</button>
+  <noscript><p class="small muted">Your browser will ask you to select a name before continuing.</p></noscript>
+</form>
+<script>
+const person=document.getElementById('tap-person');
+const remember=document.getElementById('remember-person');
+function update(){remember.disabled=!person.value;}
+person.addEventListener('change',update);
+update();
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>History</h1>
+<div class="scroll"><table>
+<tr><th>When</th><th>Who</th><th>What</th><th>Before</th><th>After</th></tr>
+{% for r in rows %}<tr><td class="small muted">{{ to_local(r.at).strftime('%-m/%-d %-I:%M %p') }}</td><td>{{ r.who }}</td><td>{{ r.action.replace('_', ' ').capitalize() }}: {{ r.entity.replace('_', ' ') }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</td>
+{% for snapshot in details[r.id] %}<td class="small">{% for label, value in snapshot %}<div><b>{{ label }}:</b> {{ value }}</div>{% else %}Not applicable{% endfor %}</td>{% endfor %}</tr>{% endfor %}
+</table></div>
+<p>Page {{ page }}</p>
+{% if page > 1 %}<a class="btn" href="?page={{ page - 1 }}">Previous</a>{% endif %}
+{% if more %}<a class="btn" href="?page={{ page + 1 }}">Next</a>{% endif %}
+<h2>Taps</h2>
+<div class="scroll"><table>
+<tr><th>When</th><th>Streamer</th><th>Shop</th><th>Result</th><th>Tag</th></tr>
+{% for t in taps %}<tr><td class="small muted">{{ to_local(t.at).strftime('%-m/%-d %-I:%M %p') }}</td><td>{{ t.streamer }}</td><td>{{ t.shop }}</td><td>{{ t.result }}</td><td>{{ t.token }}</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

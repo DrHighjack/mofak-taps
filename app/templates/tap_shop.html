@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+<form method="post" action="/t/{{ token }}/shop" class="panel">
+  <h1 class="question">{{ streamer.name }}, which shop?</h1>
+  {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  {% for s in shops %}<button class="btn big" name="shop_id" value="{{ s.id }}">{{ s.name }}</button>{% endfor %}
+</form>
+{% include "tap_identity.html" %}
+{% endblock %}

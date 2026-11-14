@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Streamers and shops</h1>
+<div class="panel">
+  <h2 style="margin-top:0">Streamers</h2>
+  <table>{% for s in streamers %}<tr><td><form method="post" action="/admin/people/streamer"><input type="hidden" name="edit_id" value="{{ s.id }}"><label for="streamer-{{ s.id }}">Name</label><input id="streamer-{{ s.id }}" type="text" name="name" value="{{ s.name }}" required maxlength="80"><button class="btn small">Save name</button></form></td><td class="muted">{{ 'on the list' if s.active else 'hidden' }}</td>
+  <td><form method="post" action="/admin/people/streamer" class="inline"><input type="hidden" name="toggle_id" value="{{ s.id }}"><button class="btn small quiet">{{ 'Hide' if s.active else 'Show' }}</button></form></td></tr>{% endfor %}</table>
+  <form method="post" action="/admin/people/streamer"><label>Add a streamer</label><input type="text" name="name" placeholder="Name"><button class="btn" style="margin-top:10px">Add</button></form>
+</div>
+<div class="panel">
+  <h2 style="margin-top:0">Shops</h2>
+  <table>{% for s in shops %}<tr><td><form method="post" action="/admin/people/shop"><input type="hidden" name="edit_id" value="{{ s.id }}"><label for="shop-{{ s.id }}">Shop name</label><input id="shop-{{ s.id }}" type="text" name="name" value="{{ s.name }}" required maxlength="80"><button class="btn small">Save name</button></form></td><td class="muted">{{ 'on the list' if s.active else 'hidden' }}</td>
+  <td><form method="post" action="/admin/people/shop" class="inline"><input type="hidden" name="toggle_id" value="{{ s.id }}"><button class="btn small quiet">{{ 'Hide' if s.active else 'Show' }}</button></form></td></tr>{% endfor %}</table>
+  <form method="post" action="/admin/people/shop"><label>Add a shop</label><input type="text" name="name" placeholder="Shop name"><button class="btn" style="margin-top:10px">Add</button></form>
+</div>
+{% endblock %}

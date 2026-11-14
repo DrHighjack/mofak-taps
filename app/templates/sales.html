@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>Sales by slot</h1>
+<div class="pager">
+  <a class="btn small quiet" aria-label="Previous day" href="/sales?date={{ prev }}{% if selected %}&amp;shop_id={{ selected.id }}{% endif %}">‹</a>
+  <form method="get" action="/sales" class="inline">
+    <label for="sales-day">Date</label><input id="sales-day" type="date" name="date" value="{{ day }}" onchange="this.form.submit()">
+    <label for="view-shop">Show sales for</label><select id="view-shop" name="shop_id" onchange="this.form.submit()">{% for s in view_shops %}<option value="{{ s.id }}" {{ 'selected' if selected and selected.id == s.id }}>{{ s.name }}{{ ' (hidden)' if not s.active else '' }}</option>{% endfor %}</select>
+    <noscript><button class="btn">Show sales</button></noscript>
+  </form>
+  <a class="btn small quiet" aria-label="Next day" href="/sales?date={{ next }}{% if selected %}&amp;shop_id={{ selected.id }}{% endif %}">›</a>
+  <span class="sp"></span>
+  <a class="btn small" href="/sales.csv?date={{ day }}{% if selected %}&amp;shop_id={{ selected.id }}{% endif %}">Download CSV</a>
+  <form method="post" action="/sheets/sync" class="inline"><input type="hidden" name="day" value="{{ day }}"><input type="hidden" name="back" value="/sales?date={{ day }}{% if selected %}&amp;shop_id={{ selected.id }}{% endif %}"><button class="btn small">Send to Google Sheets</button></form>
+</div>
+{% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+<div class="panel">
+  <form method="post" action="/sales/upload" enctype="multipart/form-data">
+    <input type="hidden" name="day" value="{{ day }}">
+    <div class="row2">
+      <div><label for="upload-shop">Shop in this file</label><select id="upload-shop" name="shop_id">{% for s in shops %}<option value="{{ s.id }}" {{ 'selected' if selected and selected.id == s.id }}>{{ s.name }}</option>{% endfor %}</select></div>
+      <div><label for="export-file">TikTok order export (CSV, filtered to this LIVE session)</label><input id="export-file" type="file" name="file" accept=".csv,.tsv,.txt" required></div>
+    </div>
+    <button class="btn" style="margin-top:12px">Upload</button>
+  </form>
+  {% if uploads %}<p class="small muted">Uploaded for this day: {% for u in uploads %}{{ u.shop.name }} {{ u.filename }} ({{ u.rows }} orders){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+</div>
+{% for g in gaps %}
+<div class="notice">Orders are unassigned and the schedule had {{ g.label }}.
+  <form method="post" action="/day/use-schedule"><input type="hidden" name="day" value="{{ day }}"><input type="hidden" name="streamer_id" value="{{ g.streamer.id }}"><input type="hidden" name="shop_id" value="{{ g.shop.id }}"><input type="hidden" name="start_time" value="{{ g.start_time }}"><input type="hidden" name="back" value="/sales"><button class="btn small">Use schedule for this gap</button></form>
+</div>
+{% endfor %}
+{% if res.overlap_count %}
+<div class="notice">{{ res.overlap_count }} {{ "order was" if res.overlap_count == 1 else "orders were" }} left unassigned because more than one logged slot at the same shop covered its Created Time. Check the overlapping slots before relying on those totals.</div>
+{% endif %}
+<div class="scroll"><table>
+<tr><th>Slot</th><th>Shop</th><th class="num">Orders</th><th class="num">Product sales</th><th class="num">Shipping</th><th class="num">Product + shipping</th></tr>
+{% for l in res.lines %}
+<tr class="{{ 'unassigned' if l.unassigned else '' }}"><td>{{ l.label }}</td><td>{{ l.shop }}</td><td class="num">{{ l.orders }}</td><td class="num">${{ '%.2f'|format(l.product) }}</td><td class="num">${{ '%.2f'|format(l.shipping) }}</td><td class="num">${{ '%.2f'|format(l.total) }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">Upload an export above and the table fills in. Slots need an End time to receive orders.</td></tr>{% endfor %}
+{% if res.lines %}{% set t = res.total %}<tr class="total"><td>Total</td><td></td><td class="num">{{ t.orders }}</td><td class="num">${{ '%.2f'|format(t.product) }}</td><td class="num">${{ '%.2f'|format(t.shipping) }}</td><td class="num">${{ '%.2f'|format(t.total) }}</td></tr>{% endif %}
+</table></div>
+{% if res.total_rows %}<p class="small muted">{{ res.total_rows }} orders in the export, {{ res.canceled }} canceled, {{ res.counted }} counted.</p>{% endif %}
+{% endblock %}

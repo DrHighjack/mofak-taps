@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>Slots for {{ day.strftime('%B %-d, %Y') }}</h1>
+<div class="pager">
+  <a class="btn small quiet" aria-label="Previous day" href="/day?date={{ prev }}">‹</a>
+  <form method="get" action="/day" class="inline"><input aria-label="Choose a date" type="date" name="date" value="{{ day }}" onchange="this.form.submit()"><noscript><button class="btn">Show slots</button></noscript></form>
+  <a class="btn small quiet" aria-label="Next day" href="/day?date={{ next }}">›</a>
+  <span class="sp"></span>
+  <a class="btn small" href="/day.csv?date={{ day }}">Download CSV</a>
+  {% if is_admin %}<form method="post" action="/sheets/sync" class="inline"><input type="hidden" name="day" value="{{ day }}"><input type="hidden" name="back" value="/day?date={{ day }}"><button class="btn small">Send to Google Sheets</button></form>{% endif %}
+</div>
+{% if request.query_params.get('msg') %}<div class="notice">{{ request.query_params.get('msg') }}</div>{% endif %}
+{% for n in noshows %}
+<div class="notice">Scheduled: {{ n.label }}, no clock-in.
+  {% if is_admin %}
+  <form method="post" action="/day/use-schedule"><input type="hidden" name="day" value="{{ day }}"><input type="hidden" name="streamer_id" value="{{ n.streamer.id }}"><input type="hidden" name="shop_id" value="{{ n.shop.id }}"><input type="hidden" name="start_time" value="{{ n.start_time }}"><button class="btn small">Use schedule</button></form>
+  <form method="post" action="/day/dismiss"><input type="hidden" name="day" value="{{ day }}"><input type="hidden" name="streamer_id" value="{{ n.streamer.id }}"><input type="hidden" name="shop_id" value="{{ n.shop.id }}"><input type="hidden" name="start_time" value="{{ n.start_time }}"><button class="btn small quiet">Dismiss</button></form>
+  {% endif %}
+</div>
+{% endfor %}
+<div class="scroll"><table>
+<tr><th>Streamer</th><th>Shop</th><th>Start</th><th>End</th><th class="num">Hours</th><th>Paste line</th>{% if is_admin %}<th></th>{% endif %}</tr>
+{% for s in slots %}
+<tr>
+  <td>{{ s.streamer.name }}
+    {% if s.status == 'auto_closed' %}<span class="flag" title="{{ s.note }}">auto-closed</span>{% elif s.status == 'estimated' %}<span class="flag">estimated</span>{% elif not s.end %}<span class="flag">still open</span>{% endif %}
+    {% if hints[s.id] %}<div class="small muted">{{ hints[s.id] }}</div>{% endif %}</td>
+  <td>{{ s.shop.name }}</td><td>{{ fmt_time(s.start) }}</td><td>{{ fmt_time(s.end) }}</td>
+  <td class="num">{{ '%.2f'|format(slot_hours(s)) if s.end else '' }}</td>
+  <td class="mono copy">{{ paste_line(s) }}</td>
+  {% if is_admin %}<td><a href="/admin/slot/{{ s.id }}">Edit</a></td>{% endif %}
+</tr>
+{% else %}<tr><td colspan="7" class="muted">No slots on this day yet.</td></tr>{% endfor %}
+</table></div>
+{% if slots %}<p><button class="btn" id="copy-lines">Copy all lines</button></p><p id="copy-result" role="status"></p>
+<script>
+document.getElementById('copy-lines').addEventListener('click',async function(){
+  var status=document.getElementById('copy-result');
+  try {
+    await navigator.clipboard.writeText(Array.from(document.querySelectorAll('td.copy')).map(function(t){return t.textContent.trim()}).filter(Boolean).join('\n'));
+    status.textContent='Copied. You can paste the lines now.';
+  } catch(e) {status.textContent='Could not copy. Select the lines in the table and copy them, or download the CSV.';}
+});
+</script>{% endif %}
+{% endblock %}

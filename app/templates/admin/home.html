@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>Admin</h1>
+{% if msg %}<div class="notice">{{ msg }}</div>{% endif %}
+<nav class="admin-menu" aria-label="Admin tools">
+  <h2>Records</h2>
+  <ul>
+    <li><a href="/admin/slots">Slot log</a><span>Find, edit, or add stream slots</span></li>
+    <li><a href="/admin/log">History</a><span>Review changes and before/after details</span></li>
+  </ul>
+  <h2>Setup</h2>
+  <ul>
+    <li><a href="/admin/people">People &amp; shops</a><span>Manage names and shops</span></li>
+    <li><a href="/admin/tags">NFC boxes</a><span>Manage shared box links and their destinations</span></li>
+    <li><a href="/admin/schedule">Schedule</a><span>Plan shifts and automatic shop selection</span></li>
+    <li><a href="/admin/settings">Settings</a><span>Automatic closing and other preferences</span></li>
+  </ul>
+</nav>
+<p><a href="/admin/logout">Log out of admin</a></p>
+<div class="panel">
+  <div class="muted">Clocked in right now</div>
+  {% if open_slots %}<div class="open-list">{% for s in open_slots %}<span class="chip"><b>{{ s.streamer.name }}</b> on {{ s.shop.name }} since {{ fmt_time(s.start) }} <a href="/admin/slot/{{ s.id }}">edit</a></span>{% endfor %}</div>
+  {% else %}<div class="small muted">Nobody.</div>{% endif %}
+</div>
+{% if flagged %}
+<h2>Closed automatically, needs a look</h2>
+<table>
+{% for s in flagged %}<tr><td>{{ to_local(s.start).strftime('%-m/%-d') }} {{ s.streamer.name }} on {{ s.shop.name }}, {{ fmt_time(s.start) }} to {{ fmt_time(s.end) }}</td><td class="muted">{{ s.note }}</td>
+<td><a href="/admin/slot/{{ s.id }}">Fix</a></td><td><form method="post" action="/admin/slot/{{ s.id }}/reviewed" class="inline"><button class="btn small quiet">Looks right</button></form></td></tr>{% endfor %}
+</table>
+{% endif %}
+<h2>Google Sheets</h2>
+<div class="panel">
+  {% if sheets_ok %}<p>Set up. Last successful send: {{ last_sync or 'never' }}. Runs on its own every night.</p>
+  <form method="post" action="/sheets/sync" class="inline"><input type="hidden" name="back" value="/admin"><button class="btn small">Send now</button></form>
+  {% else %}<p class="muted">Not connected yet. The README explains the two settings needed. Download CSV works on every page meanwhile.</p>{% endif %}
+  <p><a href="/log.csv">Download the whole stream log as CSV</a></p>
+</div>
+<h2>Recent changes</h2>
+<table>{% for r in recent %}<tr><td class="muted small">{{ to_local(r.at).strftime('%-m/%-d %-I:%M %p') }}</td><td>{{ r.who }}</td><td>{{ r.action }} {{ r.entity }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</td></tr>{% endfor %}</table>
+{% endblock %}

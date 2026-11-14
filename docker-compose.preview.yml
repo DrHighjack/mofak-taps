@@ -1,0 +1,6 @@
+services:
+  app:
+    ports: !override
+      - "127.0.0.1:18766:8000"
+    networks: !override
+      - default

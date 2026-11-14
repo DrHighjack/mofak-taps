@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Clock in or out</h1>
+<form method="post" action="/clock/ask" class="panel" id="clock-form">
+  <label for="streamer_id">Your name</label>
+  <select name="streamer_id" id="streamer_id" required aria-describedby="clock-help">
+    <option value="">Pick your name</option>
+    {% for s in streamers %}<option value="{{ s.id }}" {{ 'selected' if selected_streamer == s.id|string }}>{{ s.name }}</option>{% endfor %}
+  </select>
+  <label for="shop_id">Shop</label>
+  <select name="shop_id" id="shop_id" required aria-describedby="clock-help">
+    <option value="">Pick your shop</option>
+    {% for s in shops %}<option value="{{ s.id }}" {{ 'selected' if selected_shop == s.id|string }}>{{ s.name }}</option>{% endfor %}
+  </select>
+  <p id="clock-help" class="{{ 'form-error' if error else 'muted' }}" role="status" aria-live="polite">{{ error or 'Pick your name and shop to continue.' }}</p>
+  <div class="row2">
+    <div><button class="btn big go" name="action" value="in" aria-describedby="in-help">Clock in</button><p class="small muted" id="in-help"></p></div>
+    <div><button class="btn big stop" name="action" value="out" aria-describedby="out-help">Clock out</button><p class="small muted" id="out-help"></p></div>
+  </div>
+</form>
+<div class="panel">
+  <div class="muted">Clocked in right now</div>
+  {% if open_slots %}
+  <div class="open-list">{% for s in open_slots %}<span class="chip"><b>{{ s.streamer.name }}</b> on {{ s.shop.name }} since {{ fmt_time(s.start) }}</span>{% endfor %}</div>
+  {% else %}<div class="small muted">Nobody.</div>{% endif %}
+</div>
+<script>
+(function(){
+  const form=document.getElementById('clock-form');
+  const name=document.getElementById('streamer_id');
+  const shop=document.getElementById('shop_id');
+  const help=document.getElementById('clock-help');
+  const buttons=Array.from(form.querySelectorAll('button[name=action]'));
+  let version=0;
+  let errors={in:'',out:''};
+  let checked='';
+  function show(message,error){
+    help.textContent=message;
+    help.className=error?'form-error':'muted';
+  }
+  async function check(){
+    const current=++version;
+    checked='';
+    buttons.forEach(button=>{
+      button.disabled=true;
+      button.classList.remove('priority');
+    });
+    buttons.forEach(button=>document.getElementById(button.value+'-help').textContent='');
+    if(!name.value||!shop.value){
+      show(!name.value?'Pick your name first':'Pick your shop first',false);
+      return false;
+    }
+    const selection=name.value+':'+shop.value;
+    show('Checking your slot...',false);
+    try {
+      const response=await fetch('/clock/check?'+new URLSearchParams({streamer_id:name.value,shop_id:shop.value}));
+      if(!response.ok)throw new Error('check');
+      const result=await response.json();
+      if(current!==version)return false;
+      errors=result;
+      checked=selection;
+      buttons.forEach(button=>{
+        button.disabled=Boolean(errors[button.value]);
+        button.title=errors[button.value];
+        document.getElementById(button.value+'-help').textContent=errors[button.value];
+      });
+      const next=buttons.find(button=>!button.disabled);
+      if(next)next.classList.add('priority');
+      show(errors.in||'Ready to clock in.',Boolean(errors.in));
+      return true;
+    } catch(error){
+      if(current===version)show('Could not check your slot. Check the connection, then pick your shop again.',true);
+      return false;
+    }
+  }
+  name.addEventListener('change',check);
+  shop.addEventListener('change',check);
+  let submitting=false;
+  form.addEventListener('submit',async function(event){
+    if(submitting)return;
+    event.preventDefault();
+    const button=event.submitter;
+    if(!button||!form.reportValidity())return;
+    const selection=name.value+':'+shop.value;
+    if(!await check()||checked!==selection)return;
+    if(errors[button.value]){show(errors[button.value],true);return;}
+    submitting=true;
+    form.requestSubmit(button);
+  });
+  if({{ (error or '')|tojson }}) {
+    buttons.forEach(button=>button.disabled=true);
+  } else {check();}
+})();
+</script>
+{% endblock %}

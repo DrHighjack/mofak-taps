@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block wrapclass %}wide{% endblock %}
+{% block body %}
+<h1>Usual schedule</h1>
+<p class="muted">The schedule helps pick the shop and catch forgotten taps. A matching slot closes automatically after the scheduled end and grace period. A late clock-out can correct that end. Without a matching schedule, the timer in Settings is used.</p>
+<div class="scroll"><table>
+<tr><th>Day</th><th>Streamer</th><th>Shop</th><th>From</th><th>To</th><th></th></tr>
+{% for r in rules %}<tr><td>{{ days[r.weekday] }}</td><td>{{ r.streamer.name }}</td><td>{{ r.shop.name }}</td><td>{{ r.start_time }}</td><td>{{ r.end_time }}</td>
+<td><form method="post" action="/admin/schedule/rule" class="inline"><input type="hidden" name="delete_id" value="{{ r.id }}"><button class="btn small quiet">Remove</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="muted">No schedule yet.</td></tr>{% endfor %}
+</table></div>
+<form method="post" action="/admin/schedule/rule" class="panel">
+  <h2 style="margin-top:0">Add a usual slot</h2>
+  <div class="row2">
+    <div><label>Streamer</label><select name="streamer_id">{% for s in streamers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
+    <div><label>Shop</label><select name="shop_id">{% for s in shops %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
+  </div>
+  <label>Days</label>
+  <div class="open-list">{% for d in days %}<label class="chip" style="margin:0"><input type="checkbox" name="weekdays" value="{{ loop.index0 }}" style="width:auto"> {{ d }}</label>{% endfor %}</div>
+  <div class="row2">
+    <div><label>From</label><input type="time" name="start_time" required></div>
+    <div><label>To</label><input type="time" name="end_time" required></div>
+  </div>
+  <button class="btn" style="margin-top:12px">Add</button>
+</form>
+<h2>One-off changes</h2>
+<div class="scroll"><table>
+{% for o in overrides %}<tr><td>{{ o.day.strftime('%-m/%-d') }}</td><td>{{ 'Add' if o.kind == 'add' else 'Cancel' }}</td><td>{{ o.streamer.name }}</td><td>{{ o.shop.name }}</td><td>{{ o.start_time }}–{{ o.end_time }}</td>
+<td><form method="post" action="/admin/schedule/override" class="inline"><input type="hidden" name="delete_id" value="{{ o.id }}"><button class="btn small quiet">Remove</button></form></td></tr>
+{% else %}<tr><td class="muted">None coming up.</td></tr>{% endfor %}
+</table></div>
+<form method="post" action="/admin/schedule/override" class="panel">
+  <div class="row2">
+    <div><label>Date</label><input type="date" name="day" required></div>
+    <div><label>What</label><select name="kind"><option value="add">Add an extra slot</option><option value="cancel">Cancel a usual slot (match its From time)</option></select></div>
+    <div><label>Streamer</label><select name="streamer_id">{% for s in streamers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
+    <div><label>Shop</label><select name="shop_id">{% for s in shops %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
+    <div><label>From</label><input type="time" name="start_time" required></div>
+    <div><label>To</label><input type="time" name="end_time"></div>
+  </div>
+  <button class="btn" style="margin-top:12px">Save</button>
+</form>
+{% endblock %}

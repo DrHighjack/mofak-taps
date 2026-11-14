@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<form method="post" action="/admin/login" class="panel">
+  <h1>Admin's login</h1>
+  <input type="hidden" name="next" value="{{ next }}">
+  <label for="pw">Password</label>
+  <input type="password" name="password" id="pw" autofocus>
+  {% if error %}<p class="small" style="color:var(--stop)">{{ error }}</p>{% endif %}
+  <button class="btn big">Log in</button>
+</form>
+{% endblock %}

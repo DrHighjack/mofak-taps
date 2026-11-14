@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="message {{ 'ok' if ok else 'no' }}">{{ msg }}</div>
+<p class="small muted" style="text-align:center">Back in <span id="n">{{ msg_seconds }}</span>…</p>
+<script>
+(function(){var n={{ msg_seconds }};var el=document.getElementById('n');
+var i=setInterval(function(){n--;el.textContent=n;if(n<=0){clearInterval(i);location.href="{{ back }}";}},1000);})();
+</script>
+{% endblock %}

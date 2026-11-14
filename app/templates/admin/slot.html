@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>{{ 'Fix a slot' if slot.id else 'Add a missed slot' }}</h1>
+<form method="post" action="{{ '/admin/slot/' ~ slot.id if slot.id else '/admin/slots/new' }}" class="panel">
+  <label>Streamer</label><select name="streamer_id">{% for s in streamers %}<option value="{{ s.id }}" {{ 'selected' if s.id == slot.streamer_id }}>{{ s.name }}</option>{% endfor %}</select>
+  <label>Shop</label><select name="shop_id">{% for s in shops %}<option value="{{ s.id }}" {{ 'selected' if s.id == slot.shop_id }}>{{ s.name }}</option>{% endfor %}</select>
+  <label>Start (Pacific)</label><input type="datetime-local" name="start" value="{{ start }}" step="1" required>
+  <label>End (Pacific). Leave empty to keep it open.</label><input type="datetime-local" name="end" value="{{ end }}" step="1">
+  <p class="small muted">Status: {{ slot.status }}{% if slot.note %} ({{ slot.note }}){% endif %}. Every change is kept in History.</p>
+  <button class="btn big go">Save</button>
+  {% if slot.id %}<button class="btn quiet" name="delete" value="1" onclick="return confirm('Delete this slot? It stays in History.')">Delete this slot</button>{% endif %}
+</form>
+{% endblock %}

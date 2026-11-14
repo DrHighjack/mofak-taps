@@ -1,0 +1,4 @@
+# Optional alternative to Cloudflare Tunnel: install Caddy on the host and point DNS at it.
+example.com {
+    reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}Stream clock{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{% block nav %}
+<nav class="top" aria-label="Main navigation">
+  <a href="/clock" class="{{ 'on' if request.url.path.startswith('/clock') else '' }}">Clock</a>
+  <a href="/day" class="{{ 'on' if request.url.path.startswith('/day') else '' }}">Today</a>
+  {% if is_admin %}
+  <a href="/sales" class="{{ 'on' if request.url.path.startswith('/sales') else '' }}">Sales</a>
+  <a href="/admin" class="{{ 'on' if request.url.path.startswith('/admin') else '' }}">Admin</a>
+  {% else %}
+  <span class="sp"></span><a href="/admin/login">Admin</a>
+  {% endif %}
+</nav>
+{% endblock %}
+<main class="wrap {% block wrapclass %}{% endblock %}">
+{% block body %}{% endblock %}
+</main>
+</body>
+</html>

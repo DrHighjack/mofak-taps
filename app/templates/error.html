@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>That change could not be saved</h1>
+<p class="notice" role="alert">{{ detail }}</p>
+<button class="btn big" onclick="history.back()">Go back and check</button>
+<a class="btn big quiet" href="/clock">Open the clock screen</a>
+{% endblock %}

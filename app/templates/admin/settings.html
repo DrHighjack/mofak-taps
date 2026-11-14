@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Settings</h1>
+<form method="post" action="/admin/settings" class="panel">
+  <label>If someone forgets to clock out and they're not on the schedule, close the slot after this many hours</label>
+  <input type="number" name="auto_close_hours" value="{{ v.auto_close_hours }}" min="1" max="24">
+  <label>If they are on the schedule, close it this many minutes after the scheduled end</label>
+  <input type="number" name="auto_close_grace_min" value="{{ v.auto_close_grace_min }}" min="0" max="240">
+  <label>Flag a no-show this many minutes after a scheduled start</label>
+  <input type="number" name="noshow_after_min" value="{{ v.noshow_after_min }}" min="0" max="240">
+  <label>A tap this many minutes before a scheduled start skips the shop question</label>
+  <input type="number" name="smart_default_before_min" value="{{ v.smart_default_before_min }}" min="0" max="240">
+  <p>Messages stay on screen for 5 seconds.</p>
+  <p>A later clock-out can replace an automatic end. Admin checks the corrected slot here.</p>
+  <label><input type="checkbox" name="allow_both_shops" {{ 'checked' if v.allow_both_shops == '1' }} style="width:auto"> A streamer can be clocked in on both shops at once</label>
+  <button class="btn big go">Save</button>
+</form>
+<p class="small muted">Google Sheets: {{ 'connected' if sheets_ok else 'not connected (set GOOGLE_SERVICE_ACCOUNT_JSON and GOOGLE_SHEET_ID on the server)' }}.</p>
+{% endblock %}

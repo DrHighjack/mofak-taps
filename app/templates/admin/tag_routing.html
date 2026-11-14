@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% macro destination_form(id, current) %}
+{% set editing = draft and draft.token_id == id %}
+{% set choice = draft.destination if editing else (current if current in destinations or current == 'inherit' else 'custom') %}
+<form method="post" action="/admin/tag-routing" class="destination-form">
+  <input type="hidden" name="token_id" value="{{ id }}">
+  <label for="destination-{{ id }}">Send taps to</label>
+  <select id="destination-{{ id }}" name="destination" required>
+    {% if id %}<option value="inherit" {{ 'selected' if choice == 'inherit' }}>Use shared default</option>{% endif %}
+    {% for value, label in destinations.items() %}<option value="{{ value }}" {{ 'selected' if choice == value }}>{{ label }}</option>{% endfor %}
+    <option value="custom" {{ 'selected' if choice == 'custom' }}>Custom website URL</option>
+  </select>
+  <div class="custom-destination">
+    <label for="url-{{ id }}">Website URL</label>
+    <input id="url-{{ id }}" type="url" name="custom_url" maxlength="200" placeholder="https://example.com/page"
+           value="{{ draft.custom_url if editing else (current if choice == 'custom' else '') }}">
+  </div>
+  {% if editing and error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  <p class="small muted destination-help" role="status" aria-live="polite"></p>
+  <button class="btn small go">Save {{ 'override' if id else 'shared default' }}</button>
+</form>
+{% endmacro %}
+{% block body %}
+<h1>NFC destinations</h1>
+<p class="muted">Program each tag with its permanent tag link. Change the destination here whenever you want; no need to rewrite the tag.</p>
+{% if request.query_params.get('saved') %}<p class="notice" role="status">Destination saved. It will be used on the next tap.</p>{% endif %}
+<section class="panel">
+  <h2 style="margin-top:0">Shared default</h2>
+  <p class="small muted">Applies to every tag set to "Use shared default," including new tags. Individual overrides stay unchanged.</p>
+  {{ destination_form(0, routes[0]) }}
+</section>
+<h2>Individual tag overrides</h2>
+<p class="small muted">The shared clock flow remembers the person on their phone across all boxes. It checks their schedule for a clear shop match, otherwise asks. Sending a tag to another page does not clock anyone in or out. Protected pages still require login.</p>
+{% for t in tokens %}
+<section class="panel">
+  <h2 style="margin-top:0">{{ t.label }}{% if not t.active %} <span class="flag">Turned off</span>{% endif %}</h2>
+  <p class="small muted">Shared box / shop from schedule or selection</p>
+  <p class="small">Permanent tag link: <a class="mono" href="/t/{{ t.token }}" target="_blank" rel="noopener">{{ base }}/t/{{ t.token }}</a></p>
+  <p class="small">Current destination: <strong>{{ destinations.get(routes.get(t.id, routes[0]), routes.get(t.id, routes[0])) }}</strong>{% if t.id not in routes %} (shared default){% endif %}</p>
+  {{ destination_form(t.id, routes.get(t.id, 'inherit')) }}
+</section>
+{% else %}
+<p class="panel">No tags yet. <a href="/admin/tags">Create a tag link</a> to get started.</p>
+{% endfor %}
+<p><a href="/admin/tags">Create, rename, or turn off tags</a></p>
+<script>
+document.querySelectorAll('.destination-form').forEach(form=>{
+  const select=form.querySelector('select');
+  const custom=form.querySelector('.custom-destination');
+  const input=custom.querySelector('input');
+  const help=form.querySelector('.destination-help');
+  const button=form.querySelector('button');
+  function update(){
+    const isCustom=select.value==='custom';
+    custom.hidden=!isCustom;
+    input.disabled=!isCustom;
+    input.required=isCustom;
+    input.setCustomValidity('');
+    if(isCustom&&input.value){
+      let message='';
+      try {
+        const url=new URL(input.value);
+        if(!['http:','https:'].includes(url.protocol)||!url.hostname||url.username||url.password){
+          message='Use a full http:// or https:// website URL without a username or password.';
+        } else if(url.pathname.startsWith('/t/')){
+          message='Choose a page, not another tag link, to avoid a redirect loop.';
+        } else if(/[\s\\\x00-\x1f\x7f]/.test(input.value)){
+          message='The website URL cannot contain spaces or backslashes.';
+        }
+      } catch(error) {
+        message='Enter a full http:// or https:// website URL.';
+      }
+      input.setCustomValidity(message);
+    }
+    const valid=!isCustom||input.validity.valid;
+    button.disabled=!valid;
+    help.textContent=valid?'':(input.validationMessage||'Enter a full http:// or https:// website URL.');
+  }
+  input.addEventListener('input',update);
+  select.addEventListener('change',update);
+  update();
+});
+</script>
+{% endblock %}
